@@ -84,7 +84,7 @@
 ![](https://i.imgur.com/DuCLlGx.png)
 
 - 雲端裡面再建雲: 巢狀雲 Nested Virtualization
-- Linux 純種虛擬技術: Linux KVM
+- Linux 純種虛擬技術: Linux KVM(Kernel Virtual Machine)
 - K8S會咬IP，如果虛擬機在同一台電腦，移動到另一台電腦，IP會換，K8S會死掉，所以要在雲端建置
 
 
@@ -170,6 +170,8 @@ ddg52.qcow2 虛擬硬碟檔
 記憶體 12G*1024=12288MB
 Processors 8核心
 ```
+![](https://i.imgur.com/7DMaLF8.png)
+
 
 - 記憶體
 
@@ -231,7 +233,7 @@ x(要有讀的功能) -> source, ./File
 /user/bin/ping
 ```
 - ybean@cvn71:~$ 
-
+- 看程式有哪些Library
 > sudo ldd /usr/bin/cat
 ```
 	linux-vdso.so.1 (0x00007ffccf7d0000)
@@ -276,7 +278,10 @@ root   root  data
 
 - 能寫能改,不能刪
 > chmod 1777 /data
-
+> ls -al /
+```
+drwxrwxrwt   2 root root       4096 11月 27 15:11 data
+```
 > sudo useradd -m -s /bin/bash ybean
 > echo "ybean:ybean" | sudo chpasswd
 > sudo login ybean
@@ -295,7 +300,7 @@ root   root  data
 
 ---
 
-### try `chmod 1777 /data` 
+### try SBIT: `chmod 1777 /data` 
 
 #### can `cp`, can not `mv` 
 
@@ -415,7 +420,7 @@ systemd(1)─┬─ModemManager(726)─┬─{ModemManager}(747)
 - top -bin 2 -d 1
     - 每一秒抓一次,顯示兩次
 
-> top -bin 2  -d 1 >pid.txt
+> top -bin 2  -d 1 > pid.txt
 > cat pid.txt 
 ```
 top - 15:42:16 up  2:40,  3 users,  load average: 0.56, 0.47, 0.46
@@ -514,25 +519,335 @@ bash: fg: 工作已經終止
 
 
 ---
+# Process Security
 
-https://drive.google.com/drive/folders/1A4r2hGF1FueXqmsqO7QsDjT3R_WZB6UQ?usp=sharing
+linux kvm（英語：Kernel-based Virtual Machine，縮寫為KVM）
+kvm 優於 vmware
+
+ddg52: 172.29.0.52
 
 
+- go Language
+   - C的速度 
+   - python的簡潔 
+   - java的物件
 
 
+> cat myfile.go
+```
+package main
+import (
+    "fmt"
+    "io/ioutil"
+)
+func main() {
+    err := ioutil.WriteFile("/mulan.txt", []byte("Hello"), 0755)
+    if err != nil {
+        fmt.Printf("Unable to write file: %v\n", err)
+    } else {
+        fmt.Printf("/mulan.txt created\n")
+    }
+}
+```
 
-jbean@Lenovo:~$ ls -al /data
-總計 16
-drwxrwxrwt  4 bigred root   4096 11月 26 22:37 .
-drwxr-xr-x 21 root   root   4096 11月 26 22:34 ..
-drwxrwxr-x  2 bigred bigred 4096 11月 26 14:10 test
--rw-rw-r--  1 ybean  ybean     0 11月 26 22:36 try.txt
-drwxrwxr-x  2 ybean  ybean  4096 11月 26 22:37 ybean
-jbean@Lenovo:~$ cp /data/try.txt /data/ybean/
-cp: 無法建立普通檔案 '/data/ybean/try.txt': 拒絕不符權限的操作
-jbean@Lenovo:~$ cp /data/try.txt /data/ybean/try.txt
-cp: 無法建立普通檔案 '/data/ybean/try.txt': 拒絕不符權限的操作
+> CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o myfile
+> dir myfile
+```
+-rwxrwxr-x 1 bigred bigred 2.0M NOV 27 10:30 myfile
+```
+> ./myfile
+```
+Unable to write file: open /mulan.txt:permision denied
+```
+> sudo ./myfile
+```
+/mulan.txt created
+```
+> sudo rm /mulan.txt
 
-jbean@Lenovo:/data/ybean$ mkdir testtt.txt
-mkdir: 無法建立目錄‘testtt.txt’: 拒絕不符權限的操作
+> dir myfile
+```
+-rwxrwxr-x bigred bigred 2.0M NOV 27 10:30 myfile
+```
 
+> sudo chown root myfile
+> dir myfile
+```
+-rwxrwxr-x 1 root bigred 2.0M Nov 27 10:30 myfile
+```
+
+## SUID:chmod 4XXX
+- SUID 只會用在執行檔, Stick 用在目錄
+> sudo chmod 4755 myfile
+> ./myfile
+```
+/mulan.txt created
+```
+> dir /myfile.txt
+```
+-rwxrwxr-x 1 root bigred 5 Nov 27 10:58 /myfile.txt
+```
+- 檢視 系統中有多少具有 setuid 功能的 命令
+> sudo find / -user root -perm -4000 2>/dev/null | grep -E '^/bin|^/usr/bin'
+```
+/bin/umount
+/bin/su
+/bin/fusermount
+/bin/mount
+/usr/bin/chsh
+/usr/bin/pkexec
+/usr/bin/sudo
+/usr/bin/passwd
+/usr/bin/chfn
+/usr/bin/newgrp
+/usr/bin/gpasswd
+```
+
+> ls -al /usr/bin/passwd
+```
+-rwsr-xr-x root root 68208 May 28 2020 /usr/bin/passwd
+```
+- 創造使用者
+> sudo useradd -m -s /bin/bash zbean
+> echo "zbean:zbean" | sudo chpasswd
+> exit
+```
+logout
+```
+- 因SUID,所以zbean可以用root執行改密碼這個動作
+> ssh zbean@X.X.X.52
+> passwd
+```
+Current password:
+New password:
+passwd: password updated successfully
+```
+
+> ls -al /usr/bin/passwd
+```
+-rwsr-xr-x 1 root root 68208 May 28 2020 /usr/bin/passwd
+```
+
+- 修補漏洞,更改 others 權限
+> exit
+> ssh bigred@X.X.X.52
+> sudo chmod 750 /usr/bin/passwd
+> dir /usr/bin/passwd
+```
+-rwxr-x--- root root 68208 May 28 2020 /usr/bin/passwd
+```
+
+> exit
+> ssh zbean@X.X.X.52
+> passwd
+```
+-bash: /usr/bin/passwd: Permission denied
+```
+
+- ping 要能送封包 必須要 root，否則很容易被入侵
+> k8s start cg60
+which ping
+```
+/usr/bin/ping
+```
+> ls -al /usr/bin/ping
+```
+-rwxr-xr-x 1 root root
+```
+> k8s start cg60
+ssh X.X.X.60
+which ping
+```
+/bin/ping
+```
+> ls -al /bin/ping
+```
+-rwsr-xr-x 1 root root 64424 Jun 28 2019 /bin/ping
+```
+- Ubuntu 18.04(cg60) ping 是Set UID 20.04已拿掉
+
+- 關掉 cg60
+> k8s stop cg60
+> ssh bigred@X.X.X.52
+
+## capbility:小角色變成King
+bigred@ddg52:~$
+> sudo cp /usr/bin/pyton3 /home/zbean
+
+
+- python3 在跑程式的時候有setUID的能力
+> sudo setcap cap_setuid+ep /home/zbean/python3
+> exit
+```
+logout
+```
+> ssh zbean@X.X.X.52
+
+
+- Linux 有多少命令設定 capbility
+    - 20.04能ping, 是因為 raw(同樣有getid功能)
+    - python3 埋程式進去(getid)
+> getcap -r / 2>/dev/null
+```
+/home/zbean/python3 = cap_setuid+ep
+/bin/ping = cap_net_raw+ep
+```
+
+> ls -al python3
+```
+-rwxr-xr-x 1 root root 5453504 Jul 28 04:56 python3
+```
+>  ./python3 -c 'import os;os.setuid(0);os.system("/bin/bash")'
+>  root@ddg52:~$ whoami
+```
+root
+```
+## Linux Name Space
+- Linux Name Space:把一個程式變成一台電腦(隔離 Process ID,可以變成 有檔案系統,有獨立IP) -> 比傳統電腦快上十倍
+   - unshre
+
+- 把sh做隔離
+> sudo unshare --uts sh
+
+bigred@ddg52:~$ 
+
+> sudo unshare --uts sh
+> `#` hostname
+```
+ddg52
+```
+> `#` hostname ssn763
+> `#` hostname
+```
+ssn763
+```
+
+- 因隔離再次登入ddg，hostname 未被更改
+> ssh X.X.X.52
+> hostname
+```
+ddg52
+```
+- ps aux 讀一個目錄 /proc , 記憶體型的虛擬目錄RAM Disk
+> ps aux
+- --fork process的系統裡面可以生下子子孫孫
+> sudo unshare --pid --fork sh
+> `#` ps aux
+```
+還是看到原來的process資訊, 因沒有對應到 /proc,還在讀舊的檔案
+```
+bigred@ddg52:~$
+- 少下參數 Mount:override 蓋上去,原來的/proc 還在
+> sudo unshare --pid --fork --mount-proc sh
+>  `#` ps aux
+```
+USER PID COMMAND
+root 1     sh
+root 2     ps aux
+```
+> `#`sleep 300 &
+> `#`ps aux
+```
+USER PID COMMAND
+root  1     sh
+root  3    sleep 300
+root  4    ps aux
+```
+- PID 3 因有下 --fork 有Child
+-  /proc 目錄被掛載二次
+> mount | grep -e "^proc"
+```
+proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+```
+
+> curl -o alpine.tar.gz `http://dl-cdn.alpinelinux.org/alpine/v3.12/releases/x86_64/alpine-minirootfs-3.12.0-x86_64.tar.gz`
+- tar.gz 是 Linux 的主力壓縮檔
+> dir
+```
+-rw-rw-r-- 1 bigred bigred 2.6M Nov 27 15:20 alpine.tar.gz
+```
+> tar xvf alpine.tar.gz ;rm alpine.tar.gz; cd .. 
+
+> dir rootfs/bin
+```
+cat -> /bin/busybox
+```
+- 多個指令都是由 /bin/busybox去run
+> which busybox
+```
+/bin/busybox
+```
+> ls -alh /bin/busybox
+```
+-rwxr-xr-x root root 2.1M Nov 11 20:15 /bin/busybox
+```
+
+> dir rootfs/proc
+```
+內容是空的
+```
+> sudo unshare --pid --fork --mount-proc -R rootfs bash
+> which bash
+```
+/bin/bash
+```
+- 是從rootfs裡面找的,非ddg52
+-  -R rootfs run rootfs 檔案系統
+> sudo unshare --pid --fork --mount-proc -R rootfs sh
+> mount
+```
+proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+```
+> ps aux
+```
+PID USER TIME
+```
+> mkdir /hi
+> exit
+> dir rootfs/hi
+
+- bridge control
+
+> brctl show
+```
+bridge name
+kvmbr29
+```
+
+> cat bin/kvmnet.sh
+```
+#!/bin/bash
+
+ifconfig kvmbr29 &>/dev/null
+if [ $? != 0 ]; then
+     sudo brctl addbr kvmbr29
+     sudo ifconfig kvmbr29 hw ether 02:00:00:00:00:01
+     sudo ifconfig kvmbr29 X.X.X.254 netmask 255.255.255.0 up
+     sudo iptabkes -t nat -A POSTROUTING -s X.X.X.0/24 -j MASQUERADE
+fi
+```
+
+![](https://i.imgur.com/gNM2AlN.png)
+
+
+- 橋接器取名
+  - sudo brctl addbr kvmbr29
+- MAC address : bridge 主力網卡就要用最小!!!
+  - 02:00:00:00:00:01
+- 設定IP
+  - 行規 gateway:254
+- 偽裝IPtables 
+  - CVN71 為 bridge, kvmbr29 就等同於新增一片網卡,把Linux KVM 的虛擬機連到kvmbr29偽裝,連到CVN71出去Internet
+
+- 在哪執行,判讀是否有bridge
+> cat bin/dkh
+```
+start)
+    /home/bigred/wk/cnt/bin/kvmnet.sh
+```
+
+![](https://i.imgur.com/vYVsxzE.jpg)
+
+- Switch 跟 Bridge 的差別是 有防呆功能
+    - Switch若沒整線,就會有迴圈,Bridge會判斷有無迴圈而自動斷電
