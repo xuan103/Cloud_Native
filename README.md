@@ -5,7 +5,7 @@
 
 - [Cloud Native Computing Foundation (cncf)](https://www.cncf.io/)
 
-> open source 大家都可以用，讓資訊都是公平的
+> 為 open source 大家都可以用，讓資訊都是公平的
 
 ![](https://i.imgur.com/ykWdbDu.png)
 
@@ -13,35 +13,32 @@
 
 # 雲端（三大雲）
 
-> 最強
+- AWS / Amazon
+- Azure / 微軟
+- GCP / google
 
-- AWS Amazon
 
-> 第二：微軟 與 google 競爭
-
-- Azure 微軟
-- GCP google
-
+- 排名:
+    - AWS / Amazon (No1)
+    - Azure / 微軟  (No2.3)
+    - GCP / google (No2.3)
+    
 ---
 
 - Graduated projects 正式版
 
-```
-- containerd
-- CoreDns
-- etcd
-- Harbor
-- Helm
-- Kubernetes
-```
+    - containerd
+    - CoreDns
+    - etcd
+    - Harbor
+    - Helm
+    - Kubernetes
 
 ![](https://i.imgur.com/1j6zmHD.png)
 
-
-- Incubating projects 孵蛋計畫
+- Incubating projects (孵蛋計畫)
 
 ![](https://i.imgur.com/exJxGgT.png)
-
 
 ---
 
@@ -55,14 +52,14 @@
 - Kubernetes 船舵
 
     - 控制與管理 Docker 貨櫃
-    - 同時管很多台實體電腦，標出很多的 Docker
+    - 同時管很多台實體電腦，RUN 出很多的 Docker
 
 ---
 
 ## 如何在舊版本執行新版虛擬機
 
 - 版本不相容
-    - 無法開啟（行規: 版本可向下相容, 但不支援向上兼容 [可以就奇怪了..] ）
+    - 無法開啟（行規: 版本可向下相容, 但不支援向上兼容）
 
 ![try1](https://i.imgur.com/fp8utTY.jpg)
 
@@ -83,23 +80,28 @@
 
 ![](https://i.imgur.com/DuCLlGx.png)
 
-- 雲端裡面再建雲: 巢狀雲 Nested Virtualization
-- Linux 純種虛擬技術: Linux KVM(Kernel Virtual Machine)
+- 雲端裡面再建雲: 
+    - 巢狀雲 Nested Virtualization
+- Linux 純種虛擬技術: 
+    - linux KVM(Kernel Virtual Machine)
 - K8S會咬IP，如果虛擬機在同一台電腦，移動到另一台電腦，IP會換，K8S會死掉，所以要在雲端建置
 
 
 
 - 點檔案 > wk 目錄 > windows 視窗擺右邊, VM 擺左邊, cnt20 拖進來 > 變成小手手再放開
 
-    - cnt20必須在Linux虛擬機器解壓縮
-    - 要等右上角圈圈跑完: 第二次拷貝
+    - cnt20 必須在 Linux 虛擬機器解壓縮!
+    - 要等右上角圈圈跑完  (第二次拷貝)
+    - `cnt20`? (cnv=cloud native trainer)
 
 > unzip cnt20.zip; cd cnt
+
 ```
 alpine
 ub1804
 ub2004
 ```
+
 - 總共操控的Docker機器
 
 > dkh start
@@ -188,7 +190,7 @@ Processors 8核心
 
 # 執行程序
 
-[圖片原檔](https://docs.google.com/presentation/d/1_8Yqq2AAKlOHm66FIEa9ux2IMHBpr5YaO95S1ms6CeY/edit?usp=sharing)
+[圖片原檔連結](https://docs.google.com/presentation/d/1_8Yqq2AAKlOHm66FIEa9ux2IMHBpr5YaO95S1ms6CeY/edit?usp=sharing)
 
 ![](https://i.imgur.com/FtIdcPT.png)
 
@@ -847,7 +849,25 @@ start)
     /home/bigred/wk/cnt/bin/kvmnet.sh
 ```
 
-![](https://i.imgur.com/vYVsxzE.jpg)
+
+[圖片原檔連結] (https://docs.google.com/presentation/d/1_8Yqq2AAKlOHm66FIEa9ux2IMHBpr5YaO95S1ms6CeY/edit#slide=id.gad8050a751_1_0)
+
+
+![](https://i.imgur.com/MPcbf1V.png)
+
+
 
 - Switch 跟 Bridge 的差別是 有防呆功能
-    - Switch若沒整線,就會有迴圈,Bridge會判斷有無迴圈而自動斷電
+    - Switch若沒整線,搞不清楚線要接哪裡,接錯,就會有迴圈,Bridge會判斷有無迴圈而自動斷電
+
+
+# Process Security in Linux
+
+Host OS(Kernel) 就是有一台實體電腦，Linux作業系統
+Conrainer 也是一台電腦 裡面只有一個program,
+每個程式有跑相依檔(/bin)
+紫色這塊
+
+所有container 公用實體主機的Kernel
+
+Overlay2 兩個檔案系統堆疊起來
